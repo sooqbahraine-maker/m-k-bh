@@ -5,6 +5,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { SiteHeader } from "@/components/site-header";
 import { AddTaskDialog } from "@/components/add-task-dialog";
 import { CATEGORY_MAP, CATEGORIES, type CategoryKey } from "@/lib/categories";
+import { CURRENCIES, currencyShort, type CurrencyKey } from "@/lib/currencies";
 import { Button } from "@/components/ui/button";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
@@ -111,7 +112,7 @@ function MyTasks() {
                   <div className="mt-2 flex items-center gap-1 text-xs text-muted-foreground">
                     <MapPin className="h-3 w-3" /> {t.location}
                   </div>
-                  <p className="mt-2 text-lg font-black text-accent">{Number(t.price).toLocaleString("ar-JO")} د.أ</p>
+                  <p className="mt-2 text-lg font-black text-accent">{Number(t.price).toLocaleString("ar")} {currencyShort(t.currency)}</p>
                   <div className="mt-3 flex flex-wrap gap-2 border-t border-border pt-3">
                     {t.status !== "completed" && (
                       <Button size="sm" onClick={() => complete(t.id)} className="gradient-green text-success-foreground">
@@ -160,6 +161,7 @@ function EditTaskDialog({ task, onClose, onSaved }: { task: Task | null; onClose
         details: form.details,
         category: form.category,
         price: Number(form.price),
+        currency: form.currency ?? "JOD",
         location: form.location,
       })
       .eq("id", task.id);
@@ -193,9 +195,18 @@ function EditTaskDialog({ task, onClose, onSaved }: { task: Task | null; onClose
               </Select>
             </div>
             <div className="grid gap-1.5">
-              <Label>السعر</Label>
-              <Input type="number" value={form.price} onChange={(e) => setForm({ ...form, price: Number(e.target.value) })} />
+              <Label>العملة</Label>
+              <Select value={(form.currency as CurrencyKey) ?? "JOD"} onValueChange={(v) => setForm({ ...form, currency: v })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {CURRENCIES.map((c) => <SelectItem key={c.key} value={c.key}>{c.label} ({c.short})</SelectItem>)}
+                </SelectContent>
+              </Select>
             </div>
+          </div>
+          <div className="grid gap-1.5">
+            <Label>السعر</Label>
+            <Input type="number" value={form.price} onChange={(e) => setForm({ ...form, price: Number(e.target.value) })} />
           </div>
           <div className="grid gap-1.5">
             <Label>الموقع</Label>
