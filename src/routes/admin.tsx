@@ -1,18 +1,24 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
+import { useServerFn } from "@tanstack/react-start";
+import { deleteUserAccount } from "@/lib/admin.functions";
 import { SiteHeader } from "@/components/site-header";
 import { AddTaskDialog } from "@/components/add-task-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Trash2, Plus, ArrowRight, Users, LayoutGrid, Image as ImageIcon } from "lucide-react";
-import { CATEGORY_MAP } from "@/lib/categories";
+import { Trash2, Plus, ArrowRight, Users, LayoutGrid, Image as ImageIcon, Pencil, ImagePlus, Loader2, X } from "lucide-react";
+import { CATEGORIES, CATEGORY_MAP, type CategoryKey } from "@/lib/categories";
+import { CURRENCIES, currencyShort, type CurrencyKey } from "@/lib/currencies";
+import { uploadImage } from "@/lib/storage";
 import type { Task } from "@/components/task-card";
 
 type Banner = {
@@ -54,9 +60,9 @@ function Admin() {
           <TabBtn active={tab === "users"} onClick={() => setTab("users")} icon={<Users className="h-4 w-4" />}>المستخدمون</TabBtn>
         </div>
 
-        {tab === "banners" && <BannersAdmin />}
+        {tab === "banners" && <BannersAdmin userId={user.id} />}
         {tab === "tasks" && <TasksAdmin />}
-        {tab === "users" && <UsersAdmin />}
+        {tab === "users" && <UsersAdmin currentUserId={user.id} />}
       </main>
       <AddTaskDialog open={addOpen} onOpenChange={setAddOpen} />
     </div>
@@ -71,10 +77,12 @@ function TabBtn({ active, onClick, children, icon }: { active: boolean; onClick:
   );
 }
 
-function BannersAdmin() {
+function BannersAdmin({ userId }: { userId: string }) {
   const [banners, setBanners] = useState<Banner[]>([]);
   const [open, setOpen] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [form, setForm] = useState({ image_url: "", link_url: "", title: "", sort_order: 0 });
+  const fileRef = useRef<HTMLInputElement>(null);
 
   const load = async () => {
     const { data } = await supabase.from("banners").select("*").order("sort_order");
@@ -82,8 +90,24 @@ function BannersAdmin() {
   };
   useEffect(() => { load(); }, []);
 
+  const pickImage = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0];
+    if (!f) return;
+    setUploading(true);
+    try {
+      const url = await uploadImage("banners", f, userId);
+      setForm((s) => ({ ...s, image_url: url }));
+      toast.success("تم رفع الصورة");
+    } catch (err: any) {
+      toast.error(err?.message ?? "تعذّر رفع الصورة");
+    } finally {
+      setUploading(false);
+      if (fileRef.current) fileRef.current.value = "";
+    }
+  };
+
   const add = async () => {
-    if (!form.image_url.trim()) return toast.error("رابط الصورة مطلوب");
+    if (!form.image_url.trim()) return toast.error("الصورة مطلوبة");
     const { error } = await supabase.from("banners").insert({
       image_url: form.image_url,
       link_url: form.link_url || null,
@@ -137,12 +161,35 @@ function BannersAdmin() {
       </div>
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent>
+        <DialogContent className="max-h-[90vh] overflow-y-auto">
           <DialogHeader><DialogTitle>إضافة بنر جديد</DialogTitle></DialogHeader>
           <div className="grid gap-3">
             <div className="grid gap-1.5">
-              <Label>رابط الصورة</Label>
-              <Input value={form.image_url} onChange={(e) => setForm({ ...form, image_url: e.target.value })} placeholder="https://..." />
+              <Label>صورة البنر</Label>
+              {form.image_url ? (
+                <div className="relative overflow-hidden rounded-lg border border-border">
+                  <img src={form.image_url} alt="" className="h-32 w-full object-cover" />
+                  <button
+                    type="button"
+                    onClick={() => setForm({ ...form, image_url: "" })}
+                    className="absolute end-2 top-2 grid h-8 w-8 place-items-center rounded-full bg-black/60 text-white"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => fileRef.current?.click()}
+                  disabled={uploading}
+                  className="flex h-28 flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-border bg-muted/40 text-sm text-muted-foreground hover:border-accent hover:bg-muted/70 disabled:opacity-50"
+                >
+                  {uploading ? <Loader2 className="h-5 w-5 animate-spin" /> : <ImagePlus className="h-5 w-5" />}
+                  <span>اختيار صورة من الجهاز</span>
+                </button>
+              )}
+              <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={pickImage} />
+              <Input value={form.image_url} onChange={(e) => setForm({ ...form, image_url: e.target.value })} placeholder="أو ألصق رابط https://..." />
             </div>
             <div className="grid gap-1.5">
               <Label>رابط عند الضغط (اختياري)</Label>
@@ -159,7 +206,7 @@ function BannersAdmin() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setOpen(false)}>إلغاء</Button>
-            <Button onClick={add} className="gradient-brand text-primary-foreground">حفظ</Button>
+            <Button onClick={add} disabled={uploading} className="gradient-brand text-primary-foreground">حفظ</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -169,6 +216,7 @@ function BannersAdmin() {
 
 function TasksAdmin() {
   const [tasks, setTasks] = useState<Task[]>([]);
+  const [editing, setEditing] = useState<Task | null>(null);
   const load = async () => {
     const { data } = await supabase.from("tasks").select("*").order("created_at", { ascending: false });
     setTasks((data ?? []) as Task[]);
@@ -176,52 +224,189 @@ function TasksAdmin() {
   useEffect(() => { load(); }, []);
   const del = async (id: string) => {
     if (!confirm("حذف هذه المهمة؟")) return;
-    await supabase.from("tasks").delete().eq("id", id);
+    const { error } = await supabase.from("tasks").delete().eq("id", id);
+    if (error) return toast.error("تعذر الحذف");
+    toast.success("تم الحذف");
     load();
   };
   return (
-    <div className="overflow-x-auto rounded-xl border border-border bg-card">
-      <table className="w-full text-right text-sm">
-        <thead className="bg-muted text-xs">
-          <tr><th className="p-3">العنوان</th><th className="p-3">التصنيف</th><th className="p-3">السعر</th><th className="p-3">الحالة</th><th className="p-3">إجراءات</th></tr>
-        </thead>
-        <tbody>
-          {tasks.map((t) => (
-            <tr key={t.id} className="border-t border-border">
-              <td className="p-3 font-semibold">{t.title}</td>
-              <td className="p-3">{CATEGORY_MAP[t.category]?.label}</td>
-              <td className="p-3 font-bold text-accent">{Number(t.price).toLocaleString("ar-JO")} د.أ</td>
-              <td className="p-3">{t.status}</td>
-              <td className="p-3">
-                <Button size="sm" variant="ghost" onClick={() => del(t.id)} className="text-destructive">
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </td>
+    <>
+      <div className="overflow-x-auto rounded-xl border border-border bg-card">
+        <table className="w-full text-right text-sm">
+          <thead className="bg-muted text-xs">
+            <tr>
+              <th className="p-3">العنوان</th>
+              <th className="p-3">التصنيف</th>
+              <th className="p-3">السعر</th>
+              <th className="p-3">الحالة</th>
+              <th className="p-3">إجراءات</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+          </thead>
+          <tbody>
+            {tasks.map((t) => (
+              <tr key={t.id} className="border-t border-border">
+                <td className="p-3 font-semibold">{t.title}</td>
+                <td className="p-3">{CATEGORY_MAP[t.category]?.label}</td>
+                <td className="p-3 font-bold text-accent">{Number(t.price).toLocaleString("ar")} {currencyShort(t.currency)}</td>
+                <td className="p-3">{t.status}</td>
+                <td className="p-3">
+                  <div className="flex gap-1">
+                    <Button size="sm" variant="outline" onClick={() => setEditing(t)}>
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                    <Button size="sm" variant="ghost" onClick={() => del(t.id)} className="text-destructive">
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <EditTaskAdminDialog task={editing} onClose={() => setEditing(null)} onSaved={load} />
+    </>
   );
 }
 
-function UsersAdmin() {
+function EditTaskAdminDialog({ task, onClose, onSaved }: { task: Task | null; onClose: () => void; onSaved: () => void }) {
+  const [form, setForm] = useState<Task | null>(task);
+  useEffect(() => setForm(task), [task]);
+  if (!task || !form) return null;
+
+  const save = async () => {
+    const { error } = await supabase.from("tasks").update({
+      title: form.title,
+      details: form.details,
+      category: form.category,
+      price: Number(form.price),
+      currency: form.currency ?? "JOD",
+      location: form.location,
+      status: form.status,
+    }).eq("id", task.id);
+    if (error) return toast.error("تعذر الحفظ");
+    toast.success("تم الحفظ");
+    onSaved();
+    onClose();
+  };
+
+  return (
+    <Dialog open={!!task} onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+        <DialogHeader><DialogTitle>تعديل المهمة</DialogTitle></DialogHeader>
+        <div className="grid gap-3">
+          <div className="grid gap-1.5">
+            <Label>العنوان</Label>
+            <Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
+          </div>
+          <div className="grid gap-1.5">
+            <Label>التفاصيل</Label>
+            <Textarea rows={4} value={form.details} onChange={(e) => setForm({ ...form, details: e.target.value })} />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="grid gap-1.5">
+              <Label>التصنيف</Label>
+              <Select value={form.category} onValueChange={(v) => setForm({ ...form, category: v as CategoryKey })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {CATEGORIES.map((c) => <SelectItem key={c.key} value={c.key}>{c.label}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid gap-1.5">
+              <Label>العملة</Label>
+              <Select value={(form.currency as CurrencyKey) ?? "JOD"} onValueChange={(v) => setForm({ ...form, currency: v })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {CURRENCIES.map((c) => <SelectItem key={c.key} value={c.key}>{c.label} ({c.short})</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="grid gap-1.5">
+              <Label>السعر</Label>
+              <Input type="number" value={form.price} onChange={(e) => setForm({ ...form, price: Number(e.target.value) })} />
+            </div>
+            <div className="grid gap-1.5">
+              <Label>الحالة</Label>
+              <Select value={form.status} onValueChange={(v) => setForm({ ...form, status: v as Task["status"] })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="open">متاحة</SelectItem>
+                  <SelectItem value="accepted">قيد التنفيذ</SelectItem>
+                  <SelectItem value="completed">منتهية</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <div className="grid gap-1.5">
+            <Label>الموقع</Label>
+            <Input value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })} />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>إلغاء</Button>
+          <Button onClick={save} className="gradient-brand text-primary-foreground">حفظ</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function UsersAdmin({ currentUserId }: { currentUserId: string }) {
   const [users, setUsers] = useState<{ id: string; email: string | null; full_name: string | null; avatar_url: string | null; created_at: string }[]>([]);
-  useEffect(() => {
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const deleteFn = useServerFn(deleteUserAccount);
+
+  const load = () => {
     supabase.from("profiles").select("*").order("created_at", { ascending: false }).then(({ data }) => setUsers((data ?? []) as any));
-  }, []);
+  };
+  useEffect(load, []);
+
+  const del = async (id: string, email: string | null) => {
+    if (id === currentUserId) return toast.error("لا يمكنك حذف حسابك");
+    if (!confirm(`حذف الحساب ${email ?? id} نهائياً مع كل مهامه؟`)) return;
+    setDeletingId(id);
+    try {
+      await deleteFn({ data: { userId: id } });
+      toast.success("تم حذف الحساب");
+      load();
+    } catch (err: any) {
+      toast.error(err?.message ?? "تعذّر الحذف");
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
   return (
     <div className="overflow-x-auto rounded-xl border border-border bg-card">
       <table className="w-full text-right text-sm">
         <thead className="bg-muted text-xs">
-          <tr><th className="p-3">المستخدم</th><th className="p-3">البريد</th><th className="p-3">التسجيل</th></tr>
+          <tr>
+            <th className="p-3">المستخدم</th>
+            <th className="p-3">البريد</th>
+            <th className="p-3">التسجيل</th>
+            <th className="p-3">إجراءات</th>
+          </tr>
         </thead>
         <tbody>
           {users.map((u) => (
             <tr key={u.id} className="border-t border-border">
               <td className="p-3 font-semibold">{u.full_name ?? "-"}</td>
               <td className="p-3 text-muted-foreground">{u.email}</td>
-              <td className="p-3 text-xs">{new Date(u.created_at).toLocaleDateString("ar-JO")}</td>
+              <td className="p-3 text-xs">{new Date(u.created_at).toLocaleDateString("ar")}</td>
+              <td className="p-3">
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  disabled={u.id === currentUserId || deletingId === u.id}
+                  onClick={() => del(u.id, u.email)}
+                  className="text-destructive"
+                >
+                  {deletingId === u.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                </Button>
+              </td>
             </tr>
           ))}
         </tbody>

@@ -73,8 +73,10 @@ export type Database = {
           accepted_by: string | null
           category: Database["public"]["Enums"]["task_category"]
           created_at: string
+          currency: string
           details: string
           id: string
+          image_url: string | null
           location: string
           price: number
           status: Database["public"]["Enums"]["task_status"]
@@ -86,8 +88,10 @@ export type Database = {
           accepted_by?: string | null
           category?: Database["public"]["Enums"]["task_category"]
           created_at?: string
+          currency?: string
           details: string
           id?: string
+          image_url?: string | null
           location: string
           price?: number
           status?: Database["public"]["Enums"]["task_status"]
@@ -99,8 +103,10 @@ export type Database = {
           accepted_by?: string | null
           category?: Database["public"]["Enums"]["task_category"]
           created_at?: string
+          currency?: string
           details?: string
           id?: string
+          image_url?: string | null
           location?: string
           price?: number
           status?: Database["public"]["Enums"]["task_status"]

@@ -1,4 +1,5 @@
 import { CATEGORY_MAP, type CategoryKey } from "@/lib/categories";
+import { currencyShort } from "@/lib/currencies";
 import { MapPin, CheckCircle2, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
@@ -13,7 +14,9 @@ export type Task = {
   details: string;
   category: CategoryKey;
   price: number;
+  currency?: string | null;
   location: string;
+  image_url?: string | null;
   status: "open" | "accepted" | "completed";
   accepted_by: string | null;
   created_at: string;
@@ -41,38 +44,45 @@ export function TaskCard({ task, onChanged }: { task: Task; onChanged?: () => vo
   };
 
   return (
-    <article className="group relative flex flex-col overflow-hidden rounded-2xl border border-border bg-card p-4 shadow-card transition-all hover:-translate-y-1 hover:shadow-elegant">
-      <div className="flex items-start justify-between gap-2">
-        <span
-          className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold text-white"
-          style={{ backgroundColor: cat.colorVar }}
-        >
-          <Icon className="h-3.5 w-3.5" />
-          {cat.label}
-        </span>
-        <StatusBadge status={task.status} />
-      </div>
-
-      <h3 className="mt-3 line-clamp-2 text-base font-bold">{task.title}</h3>
-      <p className="mt-1.5 line-clamp-3 min-h-[3.75rem] text-sm text-muted-foreground">{task.details}</p>
-
-      <div className="mt-3 flex items-center gap-1.5 text-xs text-muted-foreground">
-        <MapPin className="h-3.5 w-3.5" />
-        <span className="truncate">{task.location}</span>
-      </div>
-
-      <div className="mt-4 flex items-end justify-between gap-2 border-t border-border pt-3">
-        <div>
-          <p className="text-[11px] text-muted-foreground">السعر</p>
-          <p className="text-xl font-black text-accent">
-            {Number(task.price).toLocaleString("ar-JO")} <span className="text-sm">د.أ</span>
-          </p>
+    <article className="group relative flex flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-card transition-all hover:-translate-y-1 hover:shadow-elegant">
+      {task.image_url && (
+        <div className="aspect-[16/9] w-full overflow-hidden bg-muted">
+          <img src={task.image_url} alt={task.title} loading="lazy" className="h-full w-full object-cover transition-transform group-hover:scale-105" />
         </div>
-        {task.status === "open" && task.user_id !== user?.id && (
-          <Button onClick={accept} size="sm" className="gradient-green text-success-foreground hover:opacity-95">
-            قبول فوري
-          </Button>
-        )}
+      )}
+      <div className="flex flex-1 flex-col p-4">
+        <div className="flex items-start justify-between gap-2">
+          <span
+            className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold text-white"
+            style={{ backgroundColor: cat.colorVar }}
+          >
+            <Icon className="h-3.5 w-3.5" />
+            {cat.label}
+          </span>
+          <StatusBadge status={task.status} />
+        </div>
+
+        <h3 className="mt-3 line-clamp-2 text-base font-bold">{task.title}</h3>
+        <p className="mt-1.5 line-clamp-3 min-h-[3.75rem] text-sm text-muted-foreground">{task.details}</p>
+
+        <div className="mt-3 flex items-center gap-1.5 text-xs text-muted-foreground">
+          <MapPin className="h-3.5 w-3.5" />
+          <span className="truncate">{task.location}</span>
+        </div>
+
+        <div className="mt-4 flex items-end justify-between gap-2 border-t border-border pt-3">
+          <div>
+            <p className="text-[11px] text-muted-foreground">السعر</p>
+            <p className="text-xl font-black text-accent">
+              {Number(task.price).toLocaleString("ar")} <span className="text-sm">{currencyShort(task.currency)}</span>
+            </p>
+          </div>
+          {task.status === "open" && task.user_id !== user?.id && (
+            <Button onClick={accept} size="sm" className="gradient-green text-success-foreground hover:opacity-95">
+              قبول فوري
+            </Button>
+          )}
+        </div>
       </div>
     </article>
   );

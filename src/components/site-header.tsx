@@ -14,6 +14,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
 import { toast } from "sonner";
+import logoAsset from "@/assets/logo.png.asset.json";
 
 export function SiteHeader({ onAddTask }: { onAddTask: () => void }) {
   const { user, isAdmin, loading } = useAuth();
@@ -36,9 +37,13 @@ export function SiteHeader({ onAddTask }: { onAddTask: () => void }) {
     <header className="sticky top-0 z-40 border-b border-border/60 bg-background/80 backdrop-blur-lg">
       <div className="mx-auto grid max-w-6xl grid-cols-[minmax(0,1fr)_auto] items-center gap-3 px-4 py-3 sm:flex sm:justify-between">
         <Link to="/" className="flex min-w-0 items-center gap-2">
-          <div className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl gradient-brand shadow-elegant logo-pulse">
-            <span className="text-lg font-black text-primary-foreground">م</span>
-          </div>
+          <img
+            src={logoAsset.url}
+            alt="مهمة وخدمة"
+            width={40}
+            height={40}
+            className="h-10 w-10 shrink-0 rounded-2xl shadow-elegant logo-pulse"
+          />
           <div className="min-w-0">
             <h1 className="truncate text-lg font-black leading-none logo-shine sm:text-xl">مهمة وخدمة</h1>
             <p className="mt-1 hidden text-[11px] text-muted-foreground sm:block">سوقك اليومي للمهام والخدمات</p>
