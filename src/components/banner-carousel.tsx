@@ -56,23 +56,29 @@ export function BannerCarousel() {
 
   const b = banners[idx];
   const Content = (
-    <div className="relative aspect-[16/6] w-full overflow-hidden rounded-2xl bg-muted shadow-elegant">
-      <img src={b.image_url} alt={b.title ?? ""} className="h-full w-full object-cover transition-opacity duration-700" />
+    <div className="relative w-full overflow-hidden rounded-2xl bg-black shadow-elegant">
+      <img
+        src={b.image_url}
+        alt={b.title ?? ""}
+        className="mx-auto block max-h-[70vh] w-full object-contain transition-opacity duration-700"
+      />
       {b.title && (
         <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent p-4">
-          <p className="text-sm font-bold text-white">{b.title}</p>
+          <p className="text-base font-bold text-white">{b.title}</p>
         </div>
       )}
-      <div className="absolute inset-x-0 bottom-2 flex justify-center gap-1.5">
-        {banners.map((_, i) => (
-          <button
-            key={i}
-            onClick={() => setIdx(i)}
-            className={`h-1.5 rounded-full transition-all ${i === idx ? "w-6 bg-white" : "w-1.5 bg-white/60"}`}
-            aria-label={`الصورة ${i + 1}`}
-          />
-        ))}
-      </div>
+      {banners.length > 1 && (
+        <div className="absolute inset-x-0 bottom-2 flex justify-center gap-1.5">
+          {banners.map((_, i) => (
+            <button
+              key={i}
+              onClick={() => setIdx(i)}
+              className={`h-2 rounded-full transition-all ${i === idx ? "w-7 bg-white" : "w-2 bg-white/60"}`}
+              aria-label={`الصورة ${i + 1}`}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 
