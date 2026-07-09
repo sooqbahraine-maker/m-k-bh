@@ -17,7 +17,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "sonner";
 import { Trash2, Plus, ArrowRight, Users, LayoutGrid, Image as ImageIcon, Pencil, ImagePlus, Loader2, X } from "lucide-react";
 import { CATEGORIES, CATEGORY_MAP, type CategoryKey } from "@/lib/categories";
-import { CURRENCIES, currencyShort, type CurrencyKey } from "@/lib/currencies";
+import { currencyShort } from "@/lib/currencies";
 import { uploadImage } from "@/lib/storage";
 import type { Task } from "@/components/task-card";
 
@@ -303,25 +303,14 @@ function EditTaskAdminDialog({ task, onClose, onSaved }: { task: Task | null; on
             <Label>التفاصيل</Label>
             <Textarea rows={4} value={form.details} onChange={(e) => setForm({ ...form, details: e.target.value })} />
           </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div className="grid gap-1.5">
-              <Label>التصنيف</Label>
-              <Select value={form.category} onValueChange={(v) => setForm({ ...form, category: v as CategoryKey })}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {CATEGORIES.map((c) => <SelectItem key={c.key} value={c.key}>{c.label}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="grid gap-1.5">
-              <Label>العملة</Label>
-              <Select value={(form.currency as CurrencyKey) ?? "JOD"} onValueChange={(v) => setForm({ ...form, currency: v })}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {CURRENCIES.map((c) => <SelectItem key={c.key} value={c.key}>{c.label} ({c.short})</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
+          <div className="grid gap-1.5">
+            <Label>التصنيف</Label>
+            <Select value={form.category} onValueChange={(v) => setForm({ ...form, category: v as CategoryKey })}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {CATEGORIES.map((c) => <SelectItem key={c.key} value={c.key}>{c.label}</SelectItem>)}
+              </SelectContent>
+            </Select>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="grid gap-1.5">

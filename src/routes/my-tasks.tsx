@@ -5,7 +5,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { SiteHeader } from "@/components/site-header";
 import { AddTaskDialog } from "@/components/add-task-dialog";
 import { CATEGORY_MAP, CATEGORIES, type CategoryKey } from "@/lib/categories";
-import { CURRENCIES, currencyShort, type CurrencyKey } from "@/lib/currencies";
+import { currencyShort } from "@/lib/currencies";
 import { Button } from "@/components/ui/button";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
