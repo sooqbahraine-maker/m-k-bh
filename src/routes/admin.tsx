@@ -280,7 +280,7 @@ function EditTaskAdminDialog({ task, onClose, onSaved }: { task: Task | null; on
       details: form.details,
       category: form.category,
       price: Number(form.price),
-      currency: form.currency ?? "JOD",
+      currency: "BHD",
       location: form.location,
       status: form.status,
     }).eq("id", task.id);
