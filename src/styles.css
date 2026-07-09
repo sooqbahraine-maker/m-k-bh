@@ -138,6 +138,7 @@
   color: transparent;
   animation: brand-shine 4s ease-in-out infinite;
 }
+
 .logo-pulse { animation: soft-pulse 2.6s ease-in-out infinite; }
 div[class*="lovable-badge"],
 [id*="lovable"] {
