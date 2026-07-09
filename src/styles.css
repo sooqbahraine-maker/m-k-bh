@@ -147,3 +147,12 @@ div[class*="lovable-badge"],
   opacity: 0 !important;
   pointer-events: none !important;
 }
+/* إخفاء شعار لوفابل نهائياً */
+.lovable-badge, 
+[class*="lovable-badge"],
+#lovable-badge {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+}
