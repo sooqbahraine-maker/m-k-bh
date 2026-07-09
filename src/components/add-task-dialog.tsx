@@ -6,7 +6,6 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CATEGORIES, type CategoryKey } from "@/lib/categories";
-import { CURRENCIES, type CurrencyKey } from "@/lib/currencies";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { lovable } from "@/integrations/lovable";
@@ -20,8 +19,13 @@ const schema = z.object({
   details: z.string().trim().min(10, "التفاصيل قصيرة جداً").max(1000),
   category: z.enum(["delivery", "teaching", "transport", "search", "work", "help", "other"]),
   price: z.coerce.number().min(0).max(1000000),
-  currency: z.enum(["JOD", "SAR", "AED", "KWD", "QAR", "BHD", "OMR"]),
   location: z.string().trim().min(2).max(120),
+  whatsapp: z
+    .string()
+    .trim()
+    .min(6, "رقم الواتساب مطلوب")
+    .max(20)
+    .regex(/^[+\d\s-]+$/, "رقم غير صالح"),
 });
 
 export function AddTaskDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (o: boolean) => void }) {
@@ -35,12 +39,12 @@ export function AddTaskDialog({ open, onOpenChange }: { open: boolean; onOpenCha
     details: "",
     category: "other" as CategoryKey,
     price: "",
-    currency: "JOD" as CurrencyKey,
     location: "",
+    whatsapp: "",
   });
 
   const reset = () => {
-    setForm({ title: "", details: "", category: "other", price: "", currency: "JOD", location: "" });
+    setForm({ title: "", details: "", category: "other", price: "", location: "", whatsapp: "" });
     setImageUrl("");
   };
 
@@ -79,10 +83,11 @@ export function AddTaskDialog({ open, onOpenChange }: { open: boolean; onOpenCha
       details: parsed.data.details,
       category: parsed.data.category,
       price: parsed.data.price,
-      currency: parsed.data.currency,
+      currency: "BHD",
       location: parsed.data.location,
+      whatsapp: parsed.data.whatsapp,
       image_url: imageUrl || null,
-    });
+    } as any);
     setSubmitting(false);
     if (error) { toast.error("تعذر نشر المهمة"); return; }
     toast.success("تم نشر المهمة بنجاح! 🎉");
@@ -100,7 +105,7 @@ export function AddTaskDialog({ open, onOpenChange }: { open: boolean; onOpenCha
         <div className="grid gap-4">
           <div className="grid gap-1.5">
             <Label htmlFor="title">العنوان</Label>
-            <Input id="title" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="مثال: توصيل طلب من عمّان إلى الزرقاء" />
+            <Input id="title" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="مثال: توصيل طلب داخل المنامة" />
           </div>
           <div className="grid gap-1.5">
             <Label htmlFor="details">التفاصيل والشروط</Label>
@@ -142,40 +147,40 @@ export function AddTaskDialog({ open, onOpenChange }: { open: boolean; onOpenCha
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <div className="grid gap-1.5">
-              <Label>التصنيف</Label>
-              <Select value={form.category} onValueChange={(v) => setForm({ ...form, category: v as CategoryKey })}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {CATEGORIES.map((c) => (
-                    <SelectItem key={c.key} value={c.key}>{c.label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="grid gap-1.5">
-              <Label>العملة</Label>
-              <Select value={form.currency} onValueChange={(v) => setForm({ ...form, currency: v as CurrencyKey })}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {CURRENCIES.map((c) => (
-                    <SelectItem key={c.key} value={c.key}>{c.label} ({c.short})</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+          <div className="grid gap-1.5">
+            <Label>التصنيف</Label>
+            <Select value={form.category} onValueChange={(v) => setForm({ ...form, category: v as CategoryKey })}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {CATEGORIES.map((c) => (
+                  <SelectItem key={c.key} value={c.key}>{c.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div className="grid gap-1.5">
-              <Label htmlFor="price">السعر</Label>
+              <Label htmlFor="price">السعر (د.ب)</Label>
               <Input id="price" type="number" min="0" step="0.5" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} placeholder="0" />
             </div>
             <div className="grid gap-1.5">
               <Label htmlFor="loc">الموقع</Label>
-              <Input id="loc" value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })} placeholder="مثال: عمّان - الشميساني" />
+              <Input id="loc" value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })} placeholder="مثال: المنامة - العدلية" />
             </div>
+          </div>
+
+          <div className="grid gap-1.5">
+            <Label htmlFor="wa">رقم الواتساب</Label>
+            <Input
+              id="wa"
+              type="tel"
+              dir="ltr"
+              value={form.whatsapp}
+              onChange={(e) => setForm({ ...form, whatsapp: e.target.value })}
+              placeholder="مثال: 97333xxxxxx"
+            />
+            <p className="text-xs text-muted-foreground">سيستخدم هذا الرقم لاستقبال رسائل المهتمين مباشرة عبر واتساب.</p>
           </div>
         </div>
         <DialogFooter className="gap-2">

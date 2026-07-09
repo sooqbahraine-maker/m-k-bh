@@ -83,6 +83,7 @@ export type Database = {
           title: string
           updated_at: string
           user_id: string
+          whatsapp: string | null
         }
         Insert: {
           accepted_by?: string | null
@@ -98,6 +99,7 @@ export type Database = {
           title: string
           updated_at?: string
           user_id: string
+          whatsapp?: string | null
         }
         Update: {
           accepted_by?: string | null
@@ -113,6 +115,7 @@ export type Database = {
           title?: string
           updated_at?: string
           user_id?: string
+          whatsapp?: string | null
         }
         Relationships: []
       }

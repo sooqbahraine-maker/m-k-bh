@@ -12,7 +12,6 @@ export function TaskGrid({ category }: { category: CategoryKey | null }) {
     let q = supabase
       .from("tasks")
       .select("*")
-      .eq("status", "open")
       .order("created_at", { ascending: false });
     if (category) q = q.eq("category", category);
     const { data } = await q;
@@ -48,7 +47,7 @@ export function TaskGrid({ category }: { category: CategoryKey | null }) {
           <p className="mt-1 text-sm text-muted-foreground">كن أول من ينشر مهمة!</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-4">
           {tasks.map((t) => (
             <TaskCard key={t.id} task={t} onChanged={load} />
           ))}

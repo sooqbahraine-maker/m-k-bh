@@ -5,7 +5,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { SiteHeader } from "@/components/site-header";
 import { AddTaskDialog } from "@/components/add-task-dialog";
 import { CATEGORY_MAP, CATEGORIES, type CategoryKey } from "@/lib/categories";
-import { CURRENCIES, currencyShort, type CurrencyKey } from "@/lib/currencies";
+import { currencyShort } from "@/lib/currencies";
 import { Button } from "@/components/ui/button";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
@@ -161,7 +161,7 @@ function EditTaskDialog({ task, onClose, onSaved }: { task: Task | null; onClose
         details: form.details,
         category: form.category,
         price: Number(form.price),
-        currency: form.currency ?? "JOD",
+        currency: "BHD",
         location: form.location,
       })
       .eq("id", task.id);
@@ -184,25 +184,14 @@ function EditTaskDialog({ task, onClose, onSaved }: { task: Task | null; onClose
             <Label>التفاصيل</Label>
             <Textarea rows={4} value={form.details} onChange={(e) => setForm({ ...form, details: e.target.value })} />
           </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div className="grid gap-1.5">
-              <Label>التصنيف</Label>
-              <Select value={form.category} onValueChange={(v) => setForm({ ...form, category: v as CategoryKey })}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {CATEGORIES.map((c) => <SelectItem key={c.key} value={c.key}>{c.label}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="grid gap-1.5">
-              <Label>العملة</Label>
-              <Select value={(form.currency as CurrencyKey) ?? "JOD"} onValueChange={(v) => setForm({ ...form, currency: v })}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {CURRENCIES.map((c) => <SelectItem key={c.key} value={c.key}>{c.label} ({c.short})</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
+          <div className="grid gap-1.5">
+            <Label>التصنيف</Label>
+            <Select value={form.category} onValueChange={(v) => setForm({ ...form, category: v as CategoryKey })}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {CATEGORIES.map((c) => <SelectItem key={c.key} value={c.key}>{c.label}</SelectItem>)}
+              </SelectContent>
+            </Select>
           </div>
           <div className="grid gap-1.5">
             <Label>السعر</Label>
