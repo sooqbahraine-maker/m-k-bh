@@ -31,11 +31,13 @@ export const uploadImageSecure = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     // Admin bucket restriction: only admins may upload banners
     if (data.bucket === "banners") {
-      const { data: isAdmin } = await context.supabase.rpc(
-        "has_role" as never,
-        { _user_id: context.userId, _role: "admin" } as never,
-      );
-      if (!isAdmin) throw new Error("Forbidden");
+      const { data: role } = await context.supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", context.userId)
+        .eq("role", "admin")
+        .maybeSingle();
+      if (!role) throw new Error("Forbidden");
     }
 
     // Decode base64
