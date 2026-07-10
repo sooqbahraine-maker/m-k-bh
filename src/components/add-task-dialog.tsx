@@ -141,7 +141,6 @@ export function AddTaskDialog({ open, onOpenChange }: { open: boolean; onOpenCha
               ref={fileRef}
               type="file"
               accept="image/*"
-              capture="environment"
               className="hidden"
               onChange={pickImage}
             />
