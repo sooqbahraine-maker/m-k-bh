@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import type { Task } from "@/components/task-card";
+import { editTaskSchema } from "@/lib/task-schema";
 import { toast } from "sonner";
 import { CheckCircle2, Trash2, Pencil, ArrowRight, MapPin } from "lucide-react";
 
@@ -154,16 +155,20 @@ function EditTaskDialog({ task, onClose, onSaved }: { task: Task | null; onClose
   if (!task || !form) return null;
 
   const save = async () => {
+    const parsed = editTaskSchema.safeParse({
+      title: form.title,
+      details: form.details,
+      category: form.category,
+      price: form.price,
+      location: form.location,
+    });
+    if (!parsed.success) {
+      toast.error(parsed.error.issues[0]?.message ?? "بيانات غير صحيحة");
+      return;
+    }
     const { error } = await supabase
       .from("tasks")
-      .update({
-        title: form.title,
-        details: form.details,
-        category: form.category,
-        price: Number(form.price),
-        currency: "BHD",
-        location: form.location,
-      })
+      .update({ ...parsed.data, currency: "BHD" })
       .eq("id", task.id);
     if (error) return toast.error("تعذر الحفظ");
     toast.success("تم الحفظ");

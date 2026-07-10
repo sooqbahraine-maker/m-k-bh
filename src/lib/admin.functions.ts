@@ -6,12 +6,16 @@ export const deleteUserAccount = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: { userId: string }) => z.object({ userId: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
-    const { data: isAdmin, error: roleErr } = await context.supabase.rpc("has_role", {
-      _user_id: context.userId,
-      _role: "admin",
-    });
+    // Verify caller is an admin by reading user_roles under the caller's RLS
+    // (users can only see their own role row, so this is authoritative for the caller).
+    const { data: role, error: roleErr } = await context.supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", context.userId)
+      .eq("role", "admin")
+      .maybeSingle();
     if (roleErr) throw new Error(roleErr.message);
-    if (!isAdmin) throw new Error("Forbidden");
+    if (!role) throw new Error("Forbidden");
     if (data.userId === context.userId) throw new Error("لا يمكنك حذف حسابك الخاص");
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
