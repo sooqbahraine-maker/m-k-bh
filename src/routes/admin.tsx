@@ -19,6 +19,7 @@ import { Trash2, Plus, ArrowRight, Users, LayoutGrid, Image as ImageIcon, Pencil
 import { CATEGORIES, CATEGORY_MAP, type CategoryKey } from "@/lib/categories";
 import { currencyShort } from "@/lib/currencies";
 import { uploadImage } from "@/lib/storage";
+import { editTaskSchema } from "@/lib/task-schema";
 import type { Task } from "@/components/task-card";
 
 type Banner = {
@@ -275,13 +276,24 @@ function EditTaskAdminDialog({ task, onClose, onSaved }: { task: Task | null; on
   if (!task || !form) return null;
 
   const save = async () => {
-    const { error } = await supabase.from("tasks").update({
+    const parsed = editTaskSchema.safeParse({
       title: form.title,
       details: form.details,
       category: form.category,
-      price: Number(form.price),
-      currency: "BHD",
+      price: form.price,
       location: form.location,
+    });
+    if (!parsed.success) {
+      toast.error(parsed.error.issues[0]?.message ?? "بيانات غير صحيحة");
+      return;
+    }
+    if (!["open", "accepted", "completed"].includes(form.status)) {
+      toast.error("حالة غير صالحة");
+      return;
+    }
+    const { error } = await supabase.from("tasks").update({
+      ...parsed.data,
+      currency: "BHD",
       status: form.status,
     }).eq("id", task.id);
     if (error) return toast.error("تعذر الحفظ");

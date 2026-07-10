@@ -11,22 +11,8 @@ import { useAuth } from "@/hooks/use-auth";
 import { lovable } from "@/integrations/lovable";
 import { uploadImage } from "@/lib/storage";
 import { toast } from "sonner";
-import { z } from "zod";
 import { ImagePlus, X, Loader2 } from "lucide-react";
-
-const schema = z.object({
-  title: z.string().trim().min(3, "العنوان قصير").max(120),
-  details: z.string().trim().min(10, "التفاصيل قصيرة جداً").max(1000),
-  category: z.enum(["delivery", "teaching", "transport", "search", "work", "help", "other"]),
-  price: z.coerce.number().min(0).max(1000000),
-  location: z.string().trim().min(2).max(120),
-  whatsapp: z
-    .string()
-    .trim()
-    .min(6, "رقم الواتساب مطلوب")
-    .max(20)
-    .regex(/^[+\d\s-]+$/, "رقم غير صالح"),
-});
+import { taskSchema as schema } from "@/lib/task-schema";
 
 export function AddTaskDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (o: boolean) => void }) {
   const { user } = useAuth();
