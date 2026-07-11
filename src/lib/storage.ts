@@ -25,8 +25,9 @@ export async function uploadImage(
   _userId: string,
 ): Promise<string> {
   // Client-side pre-checks for UX (server enforces authoritatively)
-  if (!ALLOWED_MIMES.has(file.type)) throw new Error("الملف يجب أن يكون صورة (JPEG / PNG / WebP / GIF)");
-  if (file.size > MAX_BYTES) throw new Error("الحد الأقصى للصورة 5 ميجابايت");
+  if (!file.type.startsWith("image/")) throw new Error("الملف يجب أن يكون صورة");
+  if (file.size > MAX_BYTES) throw new Error("الحد الأقصى للصورة 10 ميجابايت");
+
 
   const base64 = await fileToBase64(file);
   const { url } = await uploadImageSecure({ data: { bucket, base64 } });
