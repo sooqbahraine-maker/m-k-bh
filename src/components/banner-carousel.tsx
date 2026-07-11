@@ -60,8 +60,9 @@ export function BannerCarousel() {
       <img
         src={b.image_url}
         alt={b.title ?? ""}
-        className="mx-auto block max-h-[70vh] w-full object-contain transition-opacity duration-700"
+        className="mx-auto block max-h-[38vh] w-full object-contain sm:max-h-[45vh] transition-opacity duration-700"
       />
+
       {b.title && (
         <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent p-4">
           <p className="text-base font-bold text-white">{b.title}</p>
