@@ -1,7 +1,7 @@
 import { uploadImageSecure } from "@/lib/upload.functions";
 
-const ALLOWED_MIMES = new Set(["image/jpeg", "image/png", "image/webp", "image/gif"]);
-const MAX_BYTES = 5 * 1024 * 1024;
+const MAX_BYTES = 10 * 1024 * 1024;
+
 
 async function fileToBase64(file: File): Promise<string> {
   const buf = await file.arrayBuffer();
