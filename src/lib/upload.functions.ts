@@ -64,7 +64,8 @@ export const uploadImageSecure = createServerFn({ method: "POST" })
     const raw = data.base64.includes(",") ? data.base64.split(",", 2)[1]! : data.base64;
     const bytes = Uint8Array.from(atob(raw), (c) => c.charCodeAt(0));
     if (bytes.byteLength === 0) throw new Error("ملف فارغ");
-    if (bytes.byteLength > MAX_BYTES) throw new Error("الحد الأقصى للصورة 5 ميجابايت");
+    if (bytes.byteLength > MAX_BYTES) throw new Error("الحد الأقصى للصورة 10 ميجابايت");
+
 
     // Verify magic bytes
     const sig = SIGNATURES.find((s) => s.test(bytes));
