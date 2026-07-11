@@ -14,9 +14,29 @@ const SIGNATURES: Array<{ mime: string; ext: string; test: (b: Uint8Array) => bo
       b[0] === 0x52 && b[1] === 0x49 && b[2] === 0x46 && b[3] === 0x46 &&
       b[8] === 0x57 && b[9] === 0x45 && b[10] === 0x42 && b[11] === 0x50,
   },
+  { mime: "image/bmp", ext: "bmp", test: (b) => b[0] === 0x42 && b[1] === 0x4d },
+  {
+    // HEIC / HEIF / AVIF: ISOBMFF "ftyp" box at offset 4
+    mime: "image/heic",
+    ext: "heic",
+    test: (b) => {
+      if (b[4] !== 0x66 || b[5] !== 0x74 || b[6] !== 0x79 || b[7] !== 0x70) return false;
+      const brand = String.fromCharCode(b[8] ?? 0, b[9] ?? 0, b[10] ?? 0, b[11] ?? 0);
+      return ["heic", "heix", "heis", "hevc", "hevx", "mif1", "msf1", "avif", "avis"].includes(brand);
+    },
+  },
+  {
+    mime: "image/svg+xml",
+    ext: "svg",
+    test: (b) => {
+      const head = new TextDecoder().decode(b.subarray(0, Math.min(b.length, 512))).trim().toLowerCase();
+      return head.startsWith("<?xml") ? head.includes("<svg") : head.startsWith("<svg");
+    },
+  },
 ];
 
-const MAX_BYTES = 5 * 1024 * 1024; // 5MB
+const MAX_BYTES = 10 * 1024 * 1024; // 10MB
+
 
 const inputSchema = z.object({
   bucket: z.enum(["task-images", "banners"]),
